@@ -1,9 +1,8 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Particle Heart</title>
+<title>Dynamic Particle Heart</title>
 <style>
   body {
     margin: 0;
@@ -16,18 +15,18 @@
     display: block;
   }
 
-.valentine-text {
-  position: absolute;
-  width: 100%;
-  text-align: center;
-  font-size: 50px;
-  color: #ff4d6d;
-  text-shadow: 0 0 20px red, 0 0 40px pink;
-  font-weight: bold;
-  animation: glow 2s infinite alternate;
-  user-select: none;
-  pointer-events: none;
-}
+  .valentine-text {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    font-size: 50px;
+    color: #ff4d6d;
+    text-shadow: 0 0 20px red, 0 0 40px pink;
+    font-weight: bold;
+    animation: glow 2s infinite alternate;
+    user-select: none;
+    pointer-events: none;
+  }
 
   @keyframes glow {
     from { text-shadow: 0 0 10px red, 0 0 20px pink; }
@@ -37,54 +36,62 @@
 </head>
 <body>
 
-<div class="valentine-text">
-  Happy Valentine’s Day
-</div>
-
+<div class="valentine-text">Happy Valentine’s Day</div>
 <canvas id="canvas"></canvas>
 
 <script>
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
+const text = document.querySelector(".valentine-text");
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-
-const particles = [];
+let particles = [];
 const particleCount = 900;
 
 // Heart equation (parametric)
-function heart(t) {
+function heart(t, scale=1) {
   const x = 16 * Math.pow(Math.sin(t), 3);
   const y =
     13 * Math.cos(t) -
     5 * Math.cos(2 * t) -
     2 * Math.cos(3 * t) -
     Math.cos(4 * t);
-  return { x, y };
+  return { x: x * scale, y: -y * scale }; // invert y for canvas coordinates
 }
 
-// Create particles
-for (let i = 0; i < particleCount; i++) {
-  const t = Math.random() * Math.PI * 2;
-  const pos = heart(t);
+// Initialize canvas and particles
+function init() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
 
-  particles.push({
-    x: Math.random() * canvas.width,
-    y: Math.random() * canvas.height,
-    tx: canvas.width / 2 + pos.x * 15,
-    ty: canvas.height / 2 - pos.y * 15,
-    vx: 0,
-    vy: 0,
-  });
+  // Heart scaling based on canvas size
+  const scale = Math.min(canvas.width, canvas.height) / 40;
+
+  particles = [];
+  for (let i = 0; i < particleCount; i++) {
+    const t = Math.random() * Math.PI * 2;
+    const pos = heart(t, scale);
+
+    particles.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      tx: canvas.width / 2 + pos.x,
+      ty: canvas.height / 2 + pos.y,
+      vx: 0,
+      vy: 0,
+    });
+  }
+
+  // Position text dynamically above the top of the heart
+  const topHeart = heart(Math.PI / 2, scale); // top curve point
+  text.style.top = (canvas.height / 2 + topHeart.y - 80) + "px";
 }
 
+// Animation loop
 function animate() {
   ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   particles.forEach(p => {
-    // Move toward target
     p.vx += (p.tx - p.x) * 0.01;
     p.vy += (p.ty - p.y) * 0.01;
 
@@ -94,7 +101,6 @@ function animate() {
     p.x += p.vx;
     p.y += p.vy;
 
-    // Draw particle
     ctx.beginPath();
     ctx.arc(p.x, p.y, 1.5, 0, Math.PI * 2);
     ctx.fillStyle = "red";
@@ -106,12 +112,12 @@ function animate() {
   requestAnimationFrame(animate);
 }
 
-animate();
+// Handle resize
+window.addEventListener("resize", init);
 
-window.addEventListener("resize", () => {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-});
+// Initialize and start animation
+init();
+animate();
 </script>
 
 </body>
